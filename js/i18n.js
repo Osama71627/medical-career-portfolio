@@ -328,6 +328,7 @@ const DICT = {
   /* ---------- generic CRUD engine chrome ---------- */
   'Actions': 'الإجراءات', 'All': 'الكل', '— Select —': '— اختر —',
   'View Details': 'عرض التفاصيل', 'Close': 'إغلاق', 'Yes': 'نعم', 'No': 'لا',
+  'Evidence / Certificate': 'دليل / شهادة', 'File': 'ملف',
   'Add Topic': 'إضافة موضوع', 'Topic name': 'اسم الموضوع', 'Notes / key points': 'ملاحظات / نقاط رئيسية',
   'No records yet': 'لا توجد سجلات بعد', 'Add your first entry to start tracking this area.': 'أضف أول عنصر لتبدأ متابعة هذا المجال.',
   '+ Add': '+ إضافة', 'item': 'عنصر', 'No matches': 'لا توجد نتائج مطابقة', 'Try a different search or filter.': 'جرّب بحثًا أو تصفية مختلفة.',

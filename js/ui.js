@@ -160,10 +160,14 @@ async function renderFileField(container, { fileId, onChange, accept = '.pdf,.pn
     if (id) {
       const rec = await Store.getFile(id);
       const url = rec ? URL.createObjectURL(rec.blob) : '#';
+      const isImage = rec && rec.type && rec.type.startsWith('image/');
       wrap.appendChild(el(`
-        <div class="file-chip">
-          <a href="${url}" target="_blank" rel="noopener">${ICONS.file} ${esc(rec ? rec.name : 'file')}</a>
-          <button type="button" class="icon-btn" data-act="remove-file" title="${esc(tr('Remove'))}">${ICONS.close}</button>
+        <div>
+          ${isImage ? `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${esc(rec.name)}" class="detail-image-preview detail-image-preview--sm" /></a>` : ''}
+          <div class="file-chip">
+            <a href="${url}" target="_blank" rel="noopener">${ICONS.file} ${esc(rec ? rec.name : 'file')}</a>
+            <button type="button" class="icon-btn" data-act="remove-file" title="${esc(tr('Remove'))}">${ICONS.close}</button>
+          </div>
         </div>`));
       qs('[data-act="remove-file"]', wrap).addEventListener('click', () => { onChange(null); refresh(null); });
     } else {
@@ -476,7 +480,10 @@ async function openDetailModal(config, item, openForm) {
         const rec = await Store.getFile(val);
         if (rec) {
           const url = URL.createObjectURL(rec.blob);
-          valueHost.innerHTML = `<a href="${url}" target="_blank" rel="noopener" class="detail-file-link">${ICONS.file} ${esc(rec.name)}</a>`;
+          const isImage = rec.type && rec.type.startsWith('image/');
+          valueHost.innerHTML = `
+            ${isImage ? `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${esc(rec.name)}" class="detail-image-preview" /></a>` : ''}
+            <a href="${url}" target="_blank" rel="noopener" class="detail-file-link">${ICONS.file} ${esc(rec.name)}</a>`;
         } else { valueHost.textContent = '—'; }
       } else { valueHost.textContent = '—'; continue; }
     } else if (f.type === 'checkbox') {
