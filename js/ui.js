@@ -32,6 +32,15 @@ let READONLY = false;
 function setReadOnly(v) { READONLY = !!v; }
 function isReadOnly() { return READONLY; }
 
+/* ---------- icons (inline SVG — no emoji font dependency) ---------- */
+const ICONS = {
+  edit: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+  close: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  file: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>',
+};
+
 /* ---------- toast ---------- */
 function toast(msg, kind = 'default') {
   const host = qs('#toast-host');
@@ -153,8 +162,8 @@ async function renderFileField(container, { fileId, onChange, accept = '.pdf,.pn
       const url = rec ? URL.createObjectURL(rec.blob) : '#';
       wrap.appendChild(el(`
         <div class="file-chip">
-          <a href="${url}" target="_blank" rel="noopener">📎 ${esc(rec ? rec.name : 'file')}</a>
-          <button type="button" class="icon-btn" data-act="remove-file" title="${esc(tr('Remove'))}">✕</button>
+          <a href="${url}" target="_blank" rel="noopener">${ICONS.file} ${esc(rec ? rec.name : 'file')}</a>
+          <button type="button" class="icon-btn" data-act="remove-file" title="${esc(tr('Remove'))}">${ICONS.close}</button>
         </div>`));
       qs('[data-act="remove-file"]', wrap).addEventListener('click', () => { onChange(null); refresh(null); });
     } else {
@@ -183,7 +192,7 @@ function openFormModal({ title, fields, values = {}, onSubmit, wide = false }) {
       <div class="modal ${wide ? 'modal--lg' : ''}">
         <div class="modal__header">
           <h3>${esc(tr(title))}</h3>
-          <button class="icon-btn" data-act="close">✕</button>
+          <button class="icon-btn" data-act="close">${ICONS.close}</button>
         </div>
         <form class="modal__body form-grid"></form>
         <div class="modal__footer">
@@ -365,7 +374,7 @@ function renderCrudSection(container, config) {
         items.forEach(item => grid.appendChild(renderItemCard(item, columns, config, openForm, removeItem)));
         listHost.appendChild(grid);
       } else {
-        listHost.appendChild(renderItemTable(items, columns, openForm, removeItem));
+        listHost.appendChild(renderItemTable(items, columns, config, openForm, removeItem));
       }
     }
   }
@@ -374,32 +383,35 @@ function renderCrudSection(container, config) {
   return { render };
 }
 
-function renderItemTable(items, columns, openForm, removeItem) {
+function renderItemTable(items, columns, config, openForm, removeItem) {
   const table = el(`
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr>${columns.map(c => `<th>${esc(tr(c.label))}</th>`).join('')}${READONLY ? '' : `<th class="col-actions">${esc(tr('Actions'))}</th>`}</tr></thead>
+        <thead><tr>${columns.map(c => `<th>${esc(tr(c.label))}</th>`).join('')}<th class="col-actions">${esc(tr('Actions'))}</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>`);
   const tbody = qs('tbody', table);
   items.forEach(item => {
-    const tr_ = el(`<tr></tr>`);
+    const tr_ = el(`<tr class="row-clickable"></tr>`);
     columns.forEach(c => {
       const td = document.createElement('td');
       td.innerHTML = c.render ? c.render(item) : esc(item[c.key] ?? '—');
       tr_.appendChild(td);
     });
+    const actionsTd = el(`
+      <td class="col-actions">
+        <button class="icon-btn" data-act="view" title="${esc(tr('View Details'))}">${ICONS.eye}</button>
+        ${READONLY ? '' : `<button class="icon-btn" data-act="edit" title="${esc(tr('Edit'))}">${ICONS.edit}</button>
+        <button class="icon-btn icon-btn--danger" data-act="del" title="${esc(tr('Delete'))}">${ICONS.trash}</button>`}
+      </td>`);
+    qs('[data-act="view"]', actionsTd).addEventListener('click', (e) => { e.stopPropagation(); openDetailModal(config, item, openForm); });
     if (!READONLY) {
-      const actionsTd = el(`
-        <td class="col-actions">
-          <button class="icon-btn" data-act="edit" title="${esc(tr('Edit'))}">✏️</button>
-          <button class="icon-btn icon-btn--danger" data-act="del" title="${esc(tr('Delete'))}">🗑️</button>
-        </td>`);
-      qs('[data-act="edit"]', actionsTd).addEventListener('click', () => openForm(item));
-      qs('[data-act="del"]', actionsTd).addEventListener('click', () => removeItem(item));
-      tr_.appendChild(actionsTd);
+      qs('[data-act="edit"]', actionsTd).addEventListener('click', (e) => { e.stopPropagation(); openForm(item); });
+      qs('[data-act="del"]', actionsTd).addEventListener('click', (e) => { e.stopPropagation(); removeItem(item); });
     }
+    tr_.appendChild(actionsTd);
+    tr_.addEventListener('click', () => openDetailModal(config, item, openForm));
     tbody.appendChild(tr_);
   });
   return table;
@@ -409,8 +421,9 @@ function renderItemCard(item, columns, config, openForm, removeItem) {
   const primary = columns[0] ? (columns[0].render ? columns[0].render(item) : esc(item[columns[0].key])) : '';
   const rest = columns.slice(1);
   const card = el(`
-    <div class="item-card">
+    <div class="item-card item-card--clickable">
       <div class="item-card__head">
+        ${config.emptyIcon ? `<div class="item-card__icon">${config.emptyIcon}</div>` : ''}
         <h4>${primary}</h4>
         <div class="item-card__actions"></div>
       </div>
@@ -418,15 +431,85 @@ function renderItemCard(item, columns, config, openForm, removeItem) {
         ${rest.map(c => `<div class="item-card__row"><span class="item-card__label">${esc(tr(c.label))}</span><span>${c.render ? c.render(item) : esc(item[c.key] ?? '—')}</span></div>`).join('')}
       </div>
     </div>`);
+  const actionsHost = qs('.item-card__actions', card);
+  actionsHost.innerHTML = `<button class="icon-btn" data-act="view" title="${esc(tr('View Details'))}">${ICONS.eye}</button>`;
+  qs('[data-act="view"]', card).addEventListener('click', (e) => { e.stopPropagation(); openDetailModal(config, item, openForm); });
   if (!READONLY) {
-    const actionsHost = qs('.item-card__actions', card);
-    actionsHost.innerHTML = `
-      <button class="icon-btn" data-act="edit" title="${esc(tr('Edit'))}">✏️</button>
-      <button class="icon-btn icon-btn--danger" data-act="del" title="${esc(tr('Delete'))}">🗑️</button>`;
-    qs('[data-act="edit"]', card).addEventListener('click', () => openForm(item));
-    qs('[data-act="del"]', card).addEventListener('click', () => removeItem(item));
+    actionsHost.innerHTML += `
+      <button class="icon-btn" data-act="edit" title="${esc(tr('Edit'))}">${ICONS.edit}</button>
+      <button class="icon-btn icon-btn--danger" data-act="del" title="${esc(tr('Delete'))}">${ICONS.trash}</button>`;
+    qs('[data-act="edit"]', card).addEventListener('click', (e) => { e.stopPropagation(); openForm(item); });
+    qs('[data-act="del"]', card).addEventListener('click', (e) => { e.stopPropagation(); removeItem(item); });
   }
+  card.addEventListener('click', () => openDetailModal(config, item, openForm));
   return card;
+}
+
+/* ---------- read-only detail view (used by both owner and visitor) ---------- */
+async function openDetailModal(config, item, openForm) {
+  const { fields = [], columns = [], itemLabel = 'item' } = config;
+  const primaryCol = columns[0];
+  const primaryTitle = (primaryCol && item[primaryCol.key]) ? esc(item[primaryCol.key]) : esc(tr(itemLabel));
+
+  const overlay = el(`
+    <div class="modal-overlay">
+      <div class="modal modal--lg">
+        <div class="modal__header">
+          <h3>${primaryTitle || esc(tr(itemLabel))}</h3>
+          <button class="icon-btn" data-act="close">${ICONS.close}</button>
+        </div>
+        <div class="modal__body detail-view"></div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost" data-act="close">${esc(tr('Close'))}</button>
+          ${(!READONLY && openForm) ? `<button class="btn btn--primary" data-act="edit">${ICONS.edit} ${esc(tr('Edit'))}</button>` : ''}
+        </div>
+      </div>
+    </div>`);
+  const body = qs('.detail-view', overlay);
+
+  for (const f of fields) {
+    const val = item[f.key];
+    const row = el(`<div class="detail-row"><div class="detail-row__label">${esc(tr(f.label))}</div><div class="detail-row__value"></div></div>`);
+    const valueHost = qs('.detail-row__value', row);
+    if (f.type === 'file') {
+      if (val) {
+        const rec = await Store.getFile(val);
+        if (rec) {
+          const url = URL.createObjectURL(rec.blob);
+          valueHost.innerHTML = `<a href="${url}" target="_blank" rel="noopener" class="detail-file-link">${ICONS.file} ${esc(rec.name)}</a>`;
+        } else { valueHost.textContent = '—'; }
+      } else { valueHost.textContent = '—'; continue; }
+    } else if (f.type === 'checkbox') {
+      valueHost.innerHTML = val ? badge('Yes', 'green') : badge('No', 'gray');
+    } else if (f.type === 'select') {
+      valueHost.innerHTML = val ? badge(val) : '—';
+    } else if (f.type === 'date' || f.type === 'month') {
+      valueHost.textContent = val ? fmtDate(val) : '—';
+    } else if (f.type === 'percent') {
+      valueHost.textContent = (val || 0) + '%';
+    } else if (f.type === 'textarea') {
+      valueHost.innerHTML = val ? esc(val).replace(/\n/g, '<br>') : '—';
+    } else {
+      if (!val) { continue; }
+      if (typeof val === 'string' && /^https?:\/\//.test(val)) {
+        valueHost.innerHTML = `<a href="${esc(val)}" target="_blank" rel="noopener">${esc(val)}</a>`;
+      } else {
+        valueHost.textContent = val;
+      }
+    }
+    body.appendChild(row);
+  }
+  if (!body.children.length) {
+    body.appendChild(el(`<p class="muted">${esc(tr('Nothing here yet'))}</p>`));
+  }
+
+  function close() { overlay.remove(); }
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay || e.target.closest('[data-act="close"]')) close();
+  });
+  const editBtn = qs('[data-act="edit"]', overlay);
+  if (editBtn) editBtn.addEventListener('click', () => { close(); openForm(item); });
+  document.body.appendChild(overlay);
 }
 
 /* ---------- simple status checklist renderer (fundamentals/disorders/skills lists) ---------- */
@@ -445,8 +528,8 @@ function renderStatusChecklist(container, { collection, title, subtitle, statusO
         : `
           <div class="checklist-row__controls">
             <select data-key="status">${statusOptions.map(s => `<option value="${esc(s)}" ${item.status === s ? 'selected' : ''}>${esc(tr(s))}</option>`).join('')}</select>
-            <button class="icon-btn" data-act="edit" title="${esc(tr('Notes'))}">📝</button>
-            <button class="icon-btn icon-btn--danger" data-act="del" title="${esc(tr('Remove'))}">🗑️</button>
+            <button class="icon-btn" data-act="edit" title="${esc(tr('Notes'))}">${ICONS.edit}</button>
+            <button class="icon-btn icon-btn--danger" data-act="del" title="${esc(tr('Remove'))}">${ICONS.trash}</button>
           </div>`;
       const row = el(`
         <div class="checklist-row">
@@ -493,7 +576,7 @@ function renderStatusChecklist(container, { collection, title, subtitle, statusO
 
 window.UI = {
   el, qs, qsa, esc, fmtDate, toast, confirmDialog, confirmRemove, progressBar, badge, emptyState,
-  sectionHeader, renderFileField, openFormModal, renderCrudSection, renderStatusChecklist,
+  sectionHeader, renderFileField, openFormModal, renderCrudSection, renderStatusChecklist, openDetailModal,
   setReadOnly, isReadOnly,
-  STATUS_COLORS,
+  STATUS_COLORS, ICONS,
 };

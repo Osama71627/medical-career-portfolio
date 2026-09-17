@@ -114,7 +114,7 @@ Views.settings = function (root) {
     const host = UI.qs('#lang-list', langCard);
     host.innerHTML = '';
     Store.listOf('languages').forEach(l => {
-      const row = UI.el(`<div class="checklist-row"><div class="checklist-row__main"><strong>${UI.esc(t(l.language))}</strong> <span class="muted small">${UI.esc(l.level || '')}</span></div><button class="icon-btn icon-btn--danger" data-act="del">🗑️</button></div>`);
+      const row = UI.el(`<div class="checklist-row"><div class="checklist-row__main"><strong>${UI.esc(t(l.language))}</strong> <span class="muted small">${UI.esc(l.level || '')}</span></div><button class="icon-btn icon-btn--danger" data-act="del" title="${t('Delete')}">${UI.ICONS.trash}</button></div>`);
       UI.qs('[data-act="del"]', row).addEventListener('click', () => { Store.deleteItem('languages', l.id); renderLanguages(); });
       host.appendChild(row);
     });

@@ -49,7 +49,7 @@ Views.goals = function (root) {
       </div>`);
     if (!readonly) {
       const actionsHost = UI.qs('.item-card__actions', card);
-      actionsHost.innerHTML = `<button class="icon-btn" data-act="edit">✏️</button><button class="icon-btn icon-btn--danger" data-act="del">🗑️</button>`;
+      actionsHost.innerHTML = `<button class="icon-btn" data-act="edit" title="${t('Edit')}">${UI.ICONS.edit}</button><button class="icon-btn icon-btn--danger" data-act="del" title="${t('Delete')}">${UI.ICONS.trash}</button>`;
       UI.qs('[data-act="edit"]', card).addEventListener('click', () => openForm(g));
       UI.qs('[data-act="del"]', card).addEventListener('click', async () => {
         const ok = await UI.confirmRemove(t('Goal'));
